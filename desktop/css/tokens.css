@@ -1,0 +1,163 @@
+/* ProCode design tokens
+   Concept: a study logbook, not a SaaS dashboard.
+   Neutral = plain white/black. Spring Boot = green-on-neutral. PHP/Laravel = purple-on-near-black. */
+
+:root {
+  /* Neutral (default dashboard) */
+  --paper: #F5F7F3;
+  --ink: #111014;
+  --ink-soft: #4A4A52;
+  --line: #D8DBD4;
+
+  /* Spring Boot theme */
+  --sb-accent: #2F9E5C;
+  --sb-accent-soft: #E4F3EA;
+  --sb-bg: #F5F7F3;
+  --sb-ink: #0D1F17;
+
+  /* PHP / Laravel theme */
+  --php-accent: #8B5FBF;
+  --php-accent-soft: #EFE7F7;
+  --php-bg: #F7F5FA;
+  --php-ink: #1A1023;
+
+  /* Semantic (swapped by theme classes on body) */
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-soft: var(--ink-soft);
+  --accent: #3A6B4A;
+  --accent-soft: #E7EEE8;
+  --border: var(--line);
+  --surface: #FFFFFF;
+
+  --font-head: "Lora", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-accent: "Caveat", cursive;
+  --font-code: "Consolas", "Cascadia Code", "SF Mono", Menlo, monospace;
+
+  --radius: 6px;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+
+  --sidebar-w: 240px;
+  --transition: 180ms ease;
+}
+
+/* --- Topic themes: applied as classes on <body> --- */
+body.theme-springboot {
+  --bg: var(--sb-bg);
+  --fg: var(--sb-ink);
+  --fg-soft: #3E5749;
+  --accent: var(--sb-accent);
+  --accent-soft: var(--sb-accent-soft);
+  --border: #C9DDCF;
+  --surface: #FFFFFF;
+}
+
+body.theme-php {
+  --bg: var(--php-bg);
+  --fg: var(--php-ink);
+  --fg-soft: #4A3E57;
+  --accent: var(--php-accent);
+  --accent-soft: var(--php-accent-soft);
+  --border: #D9CCE8;
+  --surface: #FFFFFF;
+}
+
+body.codefont-cascadia {
+  --font-code: "Cascadia Code", "Consolas", "SF Mono", Menlo, monospace;
+}
+
+/* --- Dark mode: darkens neutral + both theme backdrops, keeps accent hues legible --- */
+body.dark {
+  --bg: #14151A;
+  --fg: #ECEDEE;
+  --fg-soft: #B0B2B8;
+  --border: #2B2D34;
+  --surface: #1D1E24;
+  --accent-soft: #22262A;
+}
+
+body.dark.theme-springboot {
+  --bg: #0D1712;
+  --fg: #E7F3EB;
+  --fg-soft: #9CB3A4;
+  --border: #1F3327;
+  --surface: #12201A;
+  --accent: #4FBE7C;
+  --accent-soft: #16281E;
+}
+
+body.dark.theme-php {
+  --bg: #170F1D;
+  --fg: #F0E9F7;
+  --fg-soft: #B39FC4;
+  --border: #322241;
+  --surface: #1E1428;
+  --accent: #A57DD6;
+  --accent-soft: #241932;
+}
+
+/* Reading mode: wider line-height, capped measure, larger serif body text.
+   Code blocks are excluded so they always stay in the chosen code font. */
+body.reading-mode .lesson-content p {
+  font-size: 1.15rem;
+  line-height: 1.85;
+  max-width: 62ch;
+  font-family: var(--font-head);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  transition: background var(--transition), color var(--transition);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0 0 var(--space-2);
+}
+
+p { line-height: 1.6; margin: 0 0 var(--space-2); }
+
+a { color: var(--accent); }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.accent-script {
+  font-family: var(--font-accent);
+  color: var(--accent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

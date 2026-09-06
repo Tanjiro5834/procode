@@ -1,0 +1,8 @@
+# Desktop (Electron)
+desktop/node_modules/
+desktop/release/
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
