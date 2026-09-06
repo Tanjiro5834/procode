@@ -180,6 +180,7 @@
 
 .main {
   flex: 1;
+  min-width: 0;
   margin-left: var(--sidebar-w);
   padding: var(--space-4) var(--space-3);
   max-width: 900px;
@@ -193,6 +194,12 @@
   margin-bottom: var(--space-3);
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.topbar h1 {
+  min-width: 0;
+  overflow-wrap: break-word;
+  flex: 1 1 auto;
 }
 
 .stat-pill {
@@ -223,7 +230,7 @@
     padding: var(--space-4) var(--space-2) var(--space-3);
   }
   .topbar {
-    padding-left: 52px;
+    padding-left: 52px; /* clears the fixed hamburger button so h1 text never sits under it */
   }
 }
 
