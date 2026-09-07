@@ -21,6 +21,12 @@
   --php-bg: #F7F5FA;
   --php-ink: #1A1023;
 
+  /* Git & Version Control theme */
+  --git-accent: #D97B3F;
+  --git-accent-soft: #FBEEE3;
+  --git-bg: #FAF6F2;
+  --git-ink: #2A1D12;
+
   /* Semantic (swapped by theme classes on body) */
   --bg: var(--paper);
   --fg: var(--ink);
@@ -66,6 +72,16 @@ body.theme-php {
   --surface: #FFFFFF;
 }
 
+body.theme-git {
+  --bg: var(--git-bg);
+  --fg: var(--git-ink);
+  --fg-soft: #6B5643;
+  --accent: var(--git-accent);
+  --accent-soft: var(--git-accent-soft);
+  --border: #E8D4C0;
+  --surface: #FFFFFF;
+}
+
 body.codefont-cascadia {
   --font-code: "Cascadia Code", "Consolas", "SF Mono", Menlo, monospace;
 }
@@ -98,6 +114,16 @@ body.dark.theme-php {
   --surface: #1E1428;
   --accent: #A57DD6;
   --accent-soft: #241932;
+}
+
+body.dark.theme-git {
+  --bg: #1D140B;
+  --fg: #F5E8DA;
+  --fg-soft: #C4A98D;
+  --border: #3D2B18;
+  --surface: #271B10;
+  --accent: #E89B5F;
+  --accent-soft: #33230F;
 }
 
 /* Reading mode: wider line-height, capped measure, larger serif body text.

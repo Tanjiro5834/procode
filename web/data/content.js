@@ -926,6 +926,323 @@ This mirrors Spring Boot almost exactly: Repository = @Repository, Service = @Se
           ]
         }
       }
+    },
+
+    git: {
+      id: "git",
+      name: "Git & Version Control",
+      theme: "git",
+      locked: false,
+      description: "Learn how to track changes, collaborate with others, and manage your code with Git.",
+      lessons: [
+        {
+          id: "git-1",
+          title: "What is Git and Why Use It?",
+          content: `Git is a tool that tracks changes to your files over time. Think of it like a time machine for your code — you can save snapshots of your project, go back to older versions, and try new things without fear of breaking what already works.
+
+Without Git, you might save files like \`final_project.js\`, \`final_project_v2.js\`, and \`final_project_FINAL.js\`. Git replaces this messy system with a clean, organized history. Every time you save a snapshot (called a commit), Git records exactly what changed and who made the change.
+
+To start using Git, you initialize a repository (repo for short) in your project folder. A repository is just a hidden folder named \`.git\` that stores all the history information.
+
+\`\`\`
+# Navigate to your project folder first, then run:
+git init
+
+# Check the status of your files
+git status
+\`\`\`
+
+After \`git init\`, Git knows you want to track this folder. \`git status\` shows you which files are new, changed, or ready to be saved. Initially, all your files will appear as "untracked" — Git sees them but isn't saving versions yet.
+
+Git doesn't automatically save everything because some files (like temporary files, compiled code, or large dependencies) don't need to be tracked. You tell Git which files to include using a \`.gitignore\` file.
+
+\`\`\`
+# .gitignore - files and folders Git should ignore
+node_modules/
+*.log
+.DS_Store
+*.class
+\`\`\`
+
+This tells Git to never track the \`node_modules\` folder, any \`.log\` files, or system files like \`.DS_Store\`. This keeps your repository clean and fast.
+
+Once you've set up your \`.gitignore\`, the next step is making your first commit — saving a snapshot of your current work.
+
+\`\`\`
+git add .           # Stage all files (prepare them for the snapshot)
+git commit -m "Initial project setup"   # Save the snapshot with a message
+\`\`\`
+
+\`git add .\` stages everything in the current folder — it's like telling Git "these files are ready to be snapshotted." \`git commit -m "message"\` actually saves the snapshot with a short description explaining what you did. Every commit gets a unique ID so you can always go back to it later.`,
+          quiz: {
+            questions: [
+              { q: "What does `git init` do?", options: ["Deletes all files in the folder", "Creates a new Git repository in the current folder", "Uploads your code to the internet", "Shows the commit history"], answer: 1 },
+              { q: "What is the purpose of a .gitignore file?", options: ["It forces Git to track all files", "It lists files Git should not track", "It stores your commit messages", "It deletes old commits"], answer: 1 },
+              { q: "Which command saves a snapshot of your staged changes with a description?", options: ["git save", "git add", "git commit -m", "git push"], answer: 2 }
+            ]
+          }
+        },
+        {
+          id: "git-2",
+          title: "Committing and Viewing History",
+          content: `Committing is the heart of Git — it's how you create save points in your project's timeline. Once you have changes you want to save, you stage them, then commit them.
+
+Think of staging like putting items into a box before shipping it. You choose exactly which files go into the box (the commit) so you don't accidentally ship half-finished work. You can stage some files, leave others unstaged, and commit only the ones you're ready to save.
+
+\`\`\`
+# See what changed since the last commit
+git diff
+
+# Stage a specific file
+git add README.md
+
+# Stage another file
+git add src/app.js
+
+# See what's staged and what isn't
+git status
+
+# Commit only the staged files
+git commit -m "Update README and add new app logic"
+\`\`\`
+
+\`git diff\` shows you the exact lines you added, removed, or changed since your last commit. It's a quick way to review your work before staging it. \`git status\` is your constant companion — it tells you which files are staged, which are changed but not staged, and which are untracked.
+
+After you've made several commits, you can view your project's timeline using \`git log\`:
+
+\`\`\`
+git log
+
+# A prettier, more compact view
+git log --oneline --graph
+\`\`\`
+
+\`git log\` shows every commit in reverse chronological order (newest first). Each commit shows its unique ID (a long hash), the author, the date, and the commit message. \`git log --oneline --graph\` gives you a condensed view with a visual branch diagram — helpful for seeing how different lines of work relate to each other.
+
+To see a specific old version of your project, you can check out a commit by its ID:
+
+\`\`\`
+# View the project as it was at commit abc1234
+git checkout abc1234
+
+# Return to the latest version
+git checkout main
+\`\`\`
+
+\`git checkout abc1234\` moves your files to the state they were in at that commit — this doesn't delete anything, it just lets you browse the past. When you're done, \`git checkout main\` brings you back to the latest version. This is invaluable for debugging or understanding when a bug was introduced.
+
+You can also compare commits directly:
+
+\`\`\`
+# Show differences between two commits
+git diff abc1234 def5678
+\`\`\`
+
+This shows exactly what changed between any two points in your history, which helps pinpoint when something broke or what was added.`,
+          quiz: {
+            questions: [
+              { q: "What does `git add` do?", options: ["Commits all changed files", "Stages files to be included in the next commit", "Shows changes between commits", "Deletes uncommitted changes"], answer: 1 },
+              { q: "Which command shows your commit history?", options: ["git status", "git diff", "git log", "git show"], answer: 2 },
+              { q: "How do you temporarily go back to an older version of your project?", options: ["git undo", "git revert HEAD", "git checkout [commit-id]", "git reset --hard"], answer: 2 }
+            ]
+          }
+        },
+        {
+          id: "git-3",
+          title: "Branches: Working on Multiple Features",
+          content: `Branches let you work on different features or experiments at the same time without interfering with each other. Think of branches like parallel universes for your code — you can try something risky in a branch, and if it doesn't work, you just delete that branch and the main project stays safe.
+
+The default branch is usually called \`main\` (or \`master\` in older projects). When you want to start a new feature, you create a new branch off of \`main\`. You work in that branch, commit your changes, and when the feature is complete, you merge it back into \`main\`.
+
+\`\`\`
+# See all branches (the * shows your current branch)
+git branch
+
+# Create a new branch named 'feature-login'
+git branch feature-login
+
+# Switch to that branch
+git checkout feature-login
+
+# Create and switch in one command
+git checkout -b feature-payment
+\`\`\`
+
+\`git branch\` lists all your local branches. The current branch has a \`*\` next to it. Creating a branch only creates a pointer — no files are changed until you switch to it. When you run \`git checkout -b feature-payment\`, you're both creating and switching to the new branch in one step.
+
+Once you're on your new branch, any commits you make stay on that branch only. You can commit freely without affecting \`main\`.
+
+\`\`\`
+# On the feature-login branch
+git add src/login.js
+git commit -m "Add login form component"
+
+# Switch back to main
+git checkout main
+
+# Your login.js changes are not visible here
+\`\`\`
+
+When you switch back to \`main\`, your files revert to the \`main\` version. Your \`feature-login\` work is safely stored in that branch. This lets you work on multiple unrelated tasks in parallel.
+
+When your feature is ready, you merge it back into \`main\`:
+
+\`\`\`
+# Switch to the target branch (main)
+git checkout main
+
+# Merge the feature branch into main
+git merge feature-login
+
+# Delete the branch if you no longer need it
+git branch -d feature-login
+\`\`\`
+
+Merging takes all the commits from \`feature-login\` and applies them to \`main\`. If there are conflicting changes (both branches changed the same line), Git will tell you and ask you to resolve the conflict manually before the merge completes. This protects you from accidentally overwriting someone else's work.
+
+Branches are also essential for collaboration — every developer can work in their own branch, then merge into a shared branch when ready.`,
+          quiz: {
+            questions: [
+              { q: "What command creates and switches to a new branch in one step?", options: ["git branch new-feature", "git checkout -b new-feature", "git new-branch new-feature", "git merge new-feature"], answer: 1 },
+              { q: "When you merge a feature branch into main, what happens to the commits on the feature branch?", options: ["They are deleted", "They are applied to main", "They become a separate history", "They are saved in a backup file"], answer: 1 },
+              { q: "What does `git branch -d feature-login` do?", options: ["Deletes the feature-login branch", "Deletes all commits on that branch", "Switches to feature-login", "Renames the branch"], answer: 0 }
+            ]
+          }
+        },
+        {
+          id: "git-4",
+          title: "Collaborating with Remotes (GitHub)",
+          content: `So far, everything you've done has been on your own computer. But Git's real power comes when you share your repository with others through a remote location like GitHub, GitLab, or Bitbucket. A remote is just a copy of your repository stored on a server that everyone can access.
+
+When you create a repository on GitHub, it gives you a URL to connect your local repository to that remote. You add the remote with \`git remote add\` and then push your commits up to share them.
+
+\`\`\`
+# Link your local repo to a GitHub remote
+git remote add origin https://github.com/yourname/project.git
+
+# See which remotes are configured
+git remote -v
+
+# Push your main branch to GitHub (the -u sets the default upstream)
+git push -u origin main
+\`\`\`
+
+\`git remote add origin [url]\` creates a connection named "origin" (the default name for the main remote). \`git remote -v\` lists all remotes with their URLs. The first push requires \`-u origin main\` to set the default relationship so future pushes can just be \`git push\`.
+
+When you push, you're sending your commits to GitHub. Other team members can then pull those commits to get your changes. To keep your local work updated with what others have pushed, use \`git pull\`:
+
+\`\`\`
+# Download and merge the latest commits from the remote
+git pull
+
+# Fetch updates without merging (to review first)
+git fetch
+
+# Check the difference between local and remote
+git status
+\`\`\`
+
+\`git pull\` fetches commits from the remote and merges them into your current branch. It's how you stay in sync with your teammates. \`git fetch\` downloads the commits but doesn't merge them — you can review what changed before merging.
+
+If both you and a teammate changed the same part of a file, you'll get a merge conflict when you pull. Git will mark the conflicted areas in your file, and you must manually decide which version to keep. This is normal and happens all the time in team work.
+
+\`\`\`
+# After editing the conflicting file to resolve it
+git add resolved-file.js
+git commit -m "Resolve merge conflict"
+git push
+\`\`\`
+
+For collaboration, the standard workflow is:
+1. Pull the latest changes before starting work (\`git pull\`)
+2. Create a branch for your feature (\`git checkout -b feature-xyz\`)
+3. Commit your work on that branch (\`git add\`, \`git commit -m\`)
+4. Push your branch to GitHub (\`git push -u origin feature-xyz\`)
+5. Open a Pull Request (GitHub's review feature) for your team to review
+6. After approval, merge your branch and delete it
+
+This keeps the main branch stable and lets everyone review code before it's merged.`,
+          quiz: {
+            questions: [
+              { q: "What does `git remote add origin [url]` do?", options: ["Deletes the remote repository", "Connects your local repo to a remote server", "Creates a new branch", "Pushes code to the remote"], answer: 1 },
+              { q: "What does `git pull` do?", options: ["Pushes your commits to the remote", "Downloads and merges remote commits into your branch", "Deletes the local repository", "Creates a new remote"], answer: 1 },
+              { q: "What is a merge conflict?", options: ["A Git error that deletes files", "When two developers changed the same lines and Git doesn't know which to keep", "When you forget to commit before switching branches", "When your branch is behind the remote by more than 10 commits"], answer: 1 }
+            ]
+          }
+        },
+        {
+          id: "git-5",
+          title: "Undoing Changes and Fixing Mistakes",
+          content: `Everyone makes mistakes — Git gives you several ways to undo things, depending on how far back the mistake is and whether you've already committed or pushed it.
+
+If you've made changes to a file but haven't staged or committed them yet, you can discard them completely. This restores the file to its state at the last commit.
+
+\`\`\`
+# Discard all unstaged changes in a file
+git checkout -- src/app.js
+
+# Discard all unstaged changes in the entire project
+git restore .
+
+# See what you're about to throw away
+git status
+\`\`\`
+
+\`git checkout -- src/app.js\` reverts that specific file to the last committed version. Any unsaved work in that file is lost, so use it carefully. \`git restore .\` does this for every changed file in the current folder.
+
+If you've staged a file but changed your mind before committing, you can unstage it:
+
+\`\`\`
+# Unstage a specific file (keep the changes)
+git reset HEAD src/app.js
+
+# Unstage everything
+git reset
+\`\`\`
+
+\`git reset HEAD src/app.js\` removes the file from staging but keeps your changes in the working directory. You can then modify it further or decide not to commit it.
+
+If you've already committed but haven't pushed yet, you can amend your last commit. This is useful for fixing a typo in your commit message or adding a forgotten file.
+
+\`\`\`
+# Change the last commit message
+git commit --amend -m "New corrected message"
+
+# Add a file to the last commit
+git add forgotten-file.js
+git commit --amend --no-edit
+\`\`\`
+
+\`--amend\` replaces the last commit with a new one. The \`--no-edit\` flag keeps the existing commit message while adding new staged changes.
+
+If you've already pushed a bad commit, don't rewrite history — use \`git revert\` to create a new commit that undoes the bad one. This is safe because it doesn't change existing history.
+
+\`\`\`
+# Create a new commit that reverses the changes from commit abc1234
+git revert abc1234
+
+# Push the revert commit
+git push
+\`\`\`
+
+\`git revert abc1234\` creates a new commit that applies the opposite changes of that old commit. Your project is now fixed, and everyone else can pull the revert safely. This is the preferred way to fix pushed commits.
+
+Finally, if you ever want to see all your commits and branches visually:
+
+\`\`\`
+git log --oneline --graph --all
+\`\`\`
+
+This shows a visual tree of your repository, including all branches and how they connect — great for understanding your project's history at a glance.`,
+          quiz: {
+            questions: [
+              { q: "Which command discards unstaged changes in a file?", options: ["git reset HEAD file", "git checkout -- file", "git commit --amend", "git revert file"], answer: 1 },
+              { q: "How do you change the message of your most recent commit if you haven't pushed yet?", options: ["git commit --amend -m \"new message\"", "git reset HEAD~1", "git revert HEAD", "git log --fix"], answer: 0 },
+              { q: "What is the safe way to undo a commit that you've already pushed?", options: ["git reset --hard HEAD~1", "git commit --amend", "git revert [commit-id]", "git push --force"], answer: 2 }
+            ]
+          }
+        }
+      ]
     }
   }
 };

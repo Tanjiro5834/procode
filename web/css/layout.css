@@ -305,6 +305,15 @@
   color: var(--fg);
 }
 
+.inline-code {
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  background: var(--accent-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  color: var(--fg);
+}
+
 .quiz-question { margin-bottom: var(--space-3); }
 .quiz-question p { font-weight: 600; margin-bottom: 0.6rem; }
 

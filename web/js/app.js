@@ -16,9 +16,10 @@ function el(tag, opts = {}, children = []) {
 
 function applyTheme(themeName) {
   currentTopicTheme = themeName;
-  document.body.classList.remove("theme-springboot", "theme-php");
+  document.body.classList.remove("theme-springboot", "theme-php", "theme-git");
   if (themeName === "springboot") document.body.classList.add("theme-springboot");
   if (themeName === "php") document.body.classList.add("theme-php");
+  if (themeName === "git") document.body.classList.add("theme-git");
 }
 
 function showToast(message) {
@@ -175,11 +176,28 @@ function renderLessonContent(rawContent) {
       container.appendChild(pre);
     } else {
       trimmed.split(/\n{2,}/).forEach(paragraph => {
-        if (paragraph.trim()) container.appendChild(el("p", { text: paragraph.trim() }));
+        if (paragraph.trim()) container.appendChild(renderProseParagraph(paragraph.trim()));
       });
     }
   });
   return container;
+}
+
+// Renders a paragraph of prose, converting `inline code` spans (single
+// backticks) into styled <code> elements. Anything outside backticks is
+// plain text. This only affects paragraphs, never fenced ``` code blocks.
+function renderProseParagraph(text) {
+  const p = el("p");
+  const segments = text.split(/(`[^`]+`)/g);
+  segments.forEach(seg => {
+    if (!seg) return;
+    if (seg.startsWith("`") && seg.endsWith("`") && seg.length > 1) {
+      p.appendChild(el("code", { class: "inline-code", text: seg.slice(1, -1) }));
+    } else {
+      p.appendChild(document.createTextNode(seg));
+    }
+  });
+  return p;
 }
 
 // ---------- Views ----------
@@ -230,6 +248,13 @@ function viewTopics() {
   phpTile.appendChild(el("h3", { text: CONTENT.topics.php.name }));
   phpTile.appendChild(el("p", { text: CONTENT.topics.php.description }));
   grid.appendChild(phpTile);
+
+  if (CONTENT.topics.git) {
+    const gitTile = el("button", { class: "topic-tile", onClick: () => { location.hash = "#/topics/git"; } });
+    gitTile.appendChild(el("h3", { text: CONTENT.topics.git.name }));
+    gitTile.appendChild(el("p", { text: CONTENT.topics.git.description }));
+    grid.appendChild(gitTile);
+  }
 
   const laravelTile = el("button", { class: "topic-tile locked" });
   laravelTile.appendChild(el("h3", { text: "Laravel \uD83D\uDD12" }));
