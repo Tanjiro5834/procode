@@ -54,12 +54,21 @@ public class ProCodeApplication {
 
 @SpringBootApplication combines three annotations: @Configuration, @EnableAutoConfiguration, and @ComponentScan. This single line tells Spring to scan your package for components, auto-configure beans based on what's on the classpath, and treat this class as a configuration source.
 
-Spring Boot embeds a server (Tomcat by default), so running the app starts a live web server on port 8080 with zero manual setup.`,
+Spring Boot embeds a server (Tomcat by default), so running the app starts a live web server on port 8080 with zero manual setup.
+
+One common real-world use is changing the port number. For example, if port 8080 is already in use, you can tell Spring Boot to start on a different port by adding a single line to your application.properties file:
+
+\`\`\`
+server.port=9090
+\`\`\`
+
+That's it — no code changes, no configuration classes. Spring Boot reads this property at startup and runs the embedded server on port 9090 instead. This shows how external configuration can adjust behavior without touching your Java code, which is very handy when deploying the same JAR to different environments (like development, testing, and production). You can also change the port via command-line arguments (e.g., --server.port=9091) for even more flexibility.`,
           quiz: {
             questions: [
               { q: "What does @SpringBootApplication combine?", options: ["Only @Controller", "@Configuration, @EnableAutoConfiguration, @ComponentScan", "Only @ComponentScan", "@Entity and @Repository"], answer: 1 },
               { q: "What server does Spring Boot embed by default?", options: ["Nginx", "Apache", "Tomcat", "IIS"], answer: 2 },
-              { q: "What is the main benefit of Spring Boot over plain Spring?", options: ["It's a different language", "Auto-configuration and less boilerplate", "It removes dependency injection", "It only works with PHP"], answer: 1 }
+              { q: "What is the main benefit of Spring Boot over plain Spring?", options: ["It's a different language", "Auto-configuration and less boilerplate", "It removes dependency injection", "It only works with PHP"], answer: 1 },
+              { q: "How can you change the embedded server port without modifying Java code?", options: ["Edit the main() method", "Set server.port in application.properties", "Use a different @SpringBootApplication annotation", "Recompile the JAR with a new port"], answer: 1 }
             ]
           }
         },
