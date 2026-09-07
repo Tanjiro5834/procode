@@ -419,6 +419,330 @@ Set the active profile using -Dspring.profiles.active=dev on the command line, o
               { q: "How do you activate the 'prod' profile when running the JAR?", options: ["-Dspring.profiles.active=prod", "--profile=prod", "-Pprod", "-Dprofile=prod"], answer: 0 }
             ]
           }
+        },
+        {
+          id: "sb-9",
+          title: "Spring Security Basics",
+          content: `Spring Security handles authentication (who you are) and authorization (what you can do) for your app. Instead of writing login checks in every controller, you define security rules once and Spring applies them automatically.
+
+To start, add the Spring Security dependency and create a configuration class annotated with @EnableWebSecurity. This tells Spring to use your custom security rules instead of the default ones (which require a randomly generated password for every restart).
+
+\`\`\`
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/public/**", "/register").permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(Customizer.withDefaults())
+            .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+\`\`\`
+
+The authorizeHttpRequests block sets rules: "/public/**" and "/register" are open to everyone, while any other request requires authentication. permitAll() means no login needed. authenticated() means the user must be logged in. .formLogin() adds a default login page, and .httpBasic() lets you send credentials in HTTP headers (common for APIs).
+
+Password encoding is critical — you never store plain-text passwords. BCryptPasswordEncoder hashes passwords using a salt (random data added before hashing) so even if two users have the same password, their stored hashes look different. When a user logs in, Spring takes the submitted password, runs it through the encoder, and compares it to the stored hash.
+
+To actually store users, you create a service that implements UserDetailsService. This tells Spring how to find users by username from your database.
+
+\`\`\`
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public CustomUserDetailsService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return org.springframework.security.core.userdetails.User
+            .withUsername(user.getUsername())
+            .password(user.getPassword()) // already encoded
+            .roles(user.getRole()) // e.g., "ADMIN", "USER"
+            .build();
+    }
+}
+\`\`\`
+
+loadUserByUsername is called automatically by Spring when a login attempt happens. It takes the username from the login form, looks it up in your database, and returns a Spring UserDetails object containing the username, encoded password, and role list. Spring then compares the submitted password with the stored encoded one using the PasswordEncoder you configured.
+
+A common pattern is creating users with encoded passwords during registration:
+
+\`\`\`
+@RestController
+public class AuthController {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostMapping("/register")
+    public User register(@RequestBody RegisterRequest request) {
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole("USER");
+        return userRepository.save(user);
+    }
+}
+\`\`\`
+
+Never store raw passwords — always call passwordEncoder.encode() before saving to the database. Roles are stored as simple strings like "USER" or "ADMIN", and Spring automatically prefixes them with "ROLE_" internally when checking authorization.`,
+          quiz: {
+            questions: [
+              { q: "What does @EnableWebSecurity do?", options: ["It enables HTTPS", "It activates your custom security configuration", "It disables all security", "It generates a random password"], answer: 1 },
+              { q: "Why should you always use a PasswordEncoder like BCryptPasswordEncoder?", options: ["It's the only option Spring supports", "It prevents plain-text passwords from being stored in the database", "It makes login faster", "It encrypts the database connection"], answer: 1 },
+              { q: "When a user submits a login form, what does Spring Security compare the submitted password against?", options: ["The raw password stored in the database", "The encoded password hash stored in the database, using the PasswordEncoder", "A session token", "The password in the application.properties file"], answer: 1 }
+            ]
+          }
+        },
+        {
+          id: "sb-10",
+          title: "Testing Spring Boot Apps",
+          content: `Testing ensures your code works correctly as you add features. Spring Boot provides tools to test your application without starting the full server each time, making tests fast and reliable.
+
+The most important testing annotation is @SpringBootTest. It loads the full application context (all your beans) so you can test how pieces work together. For controllers, you can combine it with @AutoConfigureMockMvc, which gives you MockMvc — a tool that simulates HTTP requests without actually opening a network port.
+
+\`\`\`
+@SpringBootTest
+@AutoConfigureMockMvc
+public class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void getUsers_returns200ForAdmin() throws Exception {
+        mockMvc.perform(get("/api/users"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void getUsers_returns401WhenNotLoggedIn() throws Exception {
+        mockMvc.perform(get("/api/users"))
+            .andExpect(status().isUnauthorized());
+    }
+}
+\`\`\`
+
+MockMvc lets you call endpoints with .perform(get("/url")) or .perform(post("/url").content(json)). The .andExpect() chain checks the response — status code (200 means OK, 401 means unauthorized), JSON structure, or specific values. @WithMockUser creates a fake logged-in user with given roles, so you can test security rules without setting up a real login.
+
+For testing services, you can use @SpringBootTest alone and autowire the service you want to test. But for faster tests, you can use @MockBean to replace real dependencies with fake ones (mocks) that don't hit the database.
+
+\`\`\`
+@SpringBootTest
+public class UserServiceTest {
+
+    @Autowired
+    private UserService userService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @Test
+    void getUserProfile_returnsUserWhenExists() {
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setName("Alice");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
+
+        UserProfile result = userService.getUserProfile(1L);
+
+        assertEquals("Alice", result.getName());
+        verify(userRepository).findById(1L);
+    }
+
+    @Test
+    void getUserProfile_throwsWhenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            userService.getUserProfile(99L);
+        });
+    }
+}
+\`\`\`
+
+@MockBean creates a dummy version of UserRepository that doesn't talk to the database. You use when() to tell it what to return when certain methods are called. verify() checks that the method was called with the right arguments — this confirms your service actually used the repository correctly. This approach tests the service's logic in isolation, running in milliseconds instead of seconds.
+
+For database-related tests, use @DataJpaTest instead of @SpringBootTest — it only loads JPA components and uses an in-memory database by default, making tests even faster. And when you need to start the actual server and send real HTTP requests (like integration tests with external APIs), use @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT) and inject a TestRestTemplate.`,
+          quiz: {
+            questions: [
+              { q: "What does @AutoConfigureMockMvc provide in a test?", options: ["A real web server on port 8080", "A tool to simulate HTTP requests without starting the server", "An automatic database connection", "A test login page"], answer: 1 },
+              { q: "When would you use @MockBean in a service test?", options: ["To start the real database", "To replace a real repository with a fake one that returns controlled data", "To test the controller's JSON output", "To generate random test data"], answer: 1 },
+              { q: "What does @WithMockUser do in a controller test?", options: ["It creates a real user in the database", "It simulates an authenticated user for testing security rules", "It encrypts the test request", "It disables all security during the test"], answer: 1 }
+            ]
+          }
+        },
+        {
+          id: "sb-11",
+          title: "Caching",
+          content: `Caching stores the result of expensive operations (like database queries or external API calls) so repeated requests return quickly without repeating the work. Spring Boot makes caching easy with annotations — just add @EnableCaching to a configuration class and @Cacheable to the methods you want to cache.
+
+Think of caching like a map: the method arguments are the key, and the return value is the value. The first time you call a cached method with certain arguments, Spring runs the method and stores the result. The next time you call it with the same arguments, Spring returns the stored value without running the method at all.
+
+\`\`\`
+@Configuration
+@EnableCaching
+public class CacheConfig {
+    // No code needed here — @EnableCaching turns on caching support
+}
+
+@Service
+public class ProductService {
+
+    private final ProductRepository productRepository;
+
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    @Cacheable(value = "products", key = "#id")
+    public Product getProduct(Long id) {
+        System.out.println("Fetching product from database: " + id);
+        return productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+    }
+
+    @Cacheable(value = "productList")
+    public List<Product> getAllProducts() {
+        System.out.println("Fetching all products from database");
+        return productRepository.findAll();
+    }
+}
+\`\`\`
+
+@Cacheable(value = "products", key = "#id") means "store the result in a cache named 'products' using the method's id parameter as the key." The first call to getProduct(1) runs the database query and stores the Product under key "1". The second call with id=1 returns the cached Product instantly — you'll see no "Fetching product from database" message. If you call getProduct(2), that's a different key, so the database query runs and caches that result separately.
+
+Caching helps most with data that changes rarely (like product catalogs, dropdown options, or country lists) and is expensive to fetch (like complex joins or slow external APIs). It's less useful for frequently changing data like order statuses or user balances — stale cached data would cause problems.
+
+When data does change, you need to update or remove cached entries. Use @CacheEvict to clear the cache after changes:
+
+\`\`\`
+@Service
+public class ProductService {
+
+    @CacheEvict(value = "productList", allEntries = true)
+    public Product addProduct(Product product) {
+        return productRepository.save(product);
+    }
+
+    @CacheEvict(value = "products", key = "#id")
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    @CachePut(value = "products", key = "#product.id")
+    public Product updateProduct(Product product) {
+        return productRepository.save(product);
+    }
+}
+\`\`\`
+
+@CacheEvict removes entries from the cache. With allEntries = true, it clears the entire productList cache when you add a new product (because the list now has one more item). With key = "#id", it only removes the specific product that was deleted. @CachePut updates the cache with the new value — it always runs the method and stores the result, useful when updating data so the cache stays fresh.
+
+Spring Boot supports multiple caching providers: ConcurrentHashMap (in-memory, default), Redis (distributed, good for multiple servers), and EhCache. For simple use, the default works fine. For production with multiple app instances, use Redis or a shared cache so all instances see the same cached data.`,
+          quiz: {
+            questions: [
+              { q: "What does @Cacheable do when a method is called with the same arguments repeatedly?", options: ["It runs the method every time", "It returns the cached result without running the method again", "It caches the method name only", "It deletes the previous cache entry"], answer: 1 },
+              { q: "Which annotation removes entries from the cache when data changes?", options: ["@CacheRemove", "@CacheEvict", "@CacheDelete", "@CacheFlush"], answer: 1 },
+              { q: "What kind of data is a good candidate for caching?", options: ["Frequently changing data like user session state", "Data that is expensive to fetch and changes rarely", "Every method in the application", "Large binary files"], answer: 1 }
+            ]
+          }
+        },
+        {
+          id: "sb-12",
+          title: "Building and Deploying",
+          content: `Building and deploying turns your code into a running application that users can access. With Spring Boot, you package your app as a JAR file (Java ARchive) that contains everything — code, dependencies, and the embedded server — so you can run it with a single java -jar command.
+
+To build a JAR, use the Maven Wrapper that comes with Spring Boot projects. In your terminal, navigate to your project folder and run:
+
+\`\`\`
+./mvnw clean package
+\`\`\`
+
+This compiles your code, runs tests, and packages everything into a JAR file inside the target/ folder. The JAR name looks like myapp-0.0.1-SNAPSHOT.jar. The 'clean' part deletes old build files first, and 'package' creates the new JAR. The result is a self-contained file — you can copy it to any server with Java installed and run it.
+
+To run the JAR:
+
+\`\`\`
+java -jar target/myapp-0.0.1-SNAPSHOT.jar
+\`\`\`
+
+The application starts on port 8080 (or whatever you set in application.properties). You can override properties at runtime without rebuilding:
+
+\`\`\`
+java -jar myapp.jar --server.port=9090 --spring.profiles.active=prod
+\`\`\`
+
+This starts the same JAR on port 9090 using the 'prod' profile. That's the power of externalized configuration — one JAR works everywhere.
+
+For a more production-ready approach, Docker packages your app with its environment (Java version, operating system, ports) into a container that runs the same way anywhere — your laptop, a test server, or the cloud. A Dockerfile tells Docker how to build the container:
+
+\`\`\`
+# Dockerfile
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY target/myapp-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+\`\`\`
+
+FROM specifies the base image — here, Java 17 on a slim Linux. WORKDIR sets the working directory inside the container. COPY copies your JAR from your computer into the container's /app folder with the name app.jar. EXPOSE tells Docker that the container uses port 8080 (it doesn't open the port, just documents it). ENTRYPOINT is the command that runs when the container starts.
+
+To build the Docker image:
+
+\`\`\`
+docker build -t myapp .
+\`\`\`
+
+This reads the Dockerfile in the current directory (.) and creates an image named myapp. The -t flag tags it with a name so you can refer to it easily.
+
+To run the container:
+
+\`\`\`
+docker run -p 8080:8080 myapp
+\`\`\`
+
+-p 8080:8080 maps port 8080 on your computer to port 8080 inside the container. Your app runs inside the container but is accessible at http://localhost:8080 on your machine. Docker makes deployment consistent — if it runs in Docker on your machine, it runs the same way in the cloud.
+
+For production, you can also use Docker Compose to run multiple containers together (your app, a MySQL database, Redis cache). But even a simple docker run on a server with Docker installed is a big step toward professional deployment.`,
+          quiz: {
+            questions: [
+              { q: "What command builds a JAR file from a Spring Boot project?", options: ["java -jar target/app.jar", "./mvnw clean package", "docker build -t app .", "spring build jar"], answer: 1 },
+              { q: "What is the purpose of a Dockerfile in a Spring Boot project?", options: ["To write Java code", "To define how to package the app into a container with its environment", "To configure the database connection", "To generate application.properties"], answer: 1 },
+              { q: "Which part of the Dockerfile specifies the command that runs when the container starts?", options: ["FROM", "COPY", "EXPOSE", "ENTRYPOINT"], answer: 3 }
+            ]
+          }
         }
       ]
     },
